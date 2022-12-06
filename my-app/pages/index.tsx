@@ -1,7 +1,12 @@
 import styles from "../styles/Home.module.css";
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
+import {
+  getAuth,
+  connectAuthEmulator,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
+import { useState } from "react";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -19,9 +24,31 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+
+// Initialize Firebase Authentication and get a reference to the service
+const auth = getAuth(app);
+
+connectAuthEmulator(auth, "http://localhost:9099");
 
 export default function Home() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const signIn = (email: string, password: string) => {
+    signInWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        // Signed in
+        const user = userCredential.user;
+        console.log(userCredential);
+        // ...
+      })
+      .catch((error) => {
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        console.log(error);
+      });
+  };
+
   return (
     <div className={styles.container}>
       <div id="login">
@@ -32,17 +59,37 @@ export default function Home() {
         </div>
         <form>
           <div>
-            <input id="txtEmail" type="email" />
+            <input
+              id="txtEmail"
+              type="email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+              }}
+            />
             <label>Email</label>
           </div>
           <div>
-            <input id="txtPassword" type="password" />
+            <input
+              id="txtPassword"
+              type="password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+              }}
+            />
             <label>Password</label>
           </div>
           <div id="divLoginError">
             <div id="lblLoginErrorMessage">Error message</div>
           </div>
-          <button id="btnLogin" type="button">
+          <button
+            id="btnLogin"
+            type="button"
+            onClick={() => {
+              signIn(email, password);
+            }}
+          >
             Log in
           </button>
           <button id="btnSignup" type="button">
