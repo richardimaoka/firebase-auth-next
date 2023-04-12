@@ -1,18 +1,92 @@
 // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import Image from "next/image";
+import { FirebaseApp, initializeApp } from "firebase/app";
+import {
+  Auth,
+  GoogleAuthProvider,
+  getAuth,
+  signInWithPopup,
+} from "firebase/auth";
+import { GetServerSideProps } from "next";
 import { Inter } from "next/font/google";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 
-const firebaseConfig = {
-  apiKey: process.env.FIREBASE_API_KEY,
-  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.FIREBASE_PROJECT_ID,
-};
-const app = initializeApp(firebaseConfig);
+interface FirebaseConfig {
+  apiKey: string;
+  authDomain: string;
+  projectId: string;
+}
 
-export default function Home() {
+interface HomeProps {
+  firebaseConfig: FirebaseConfig;
+}
+
+export const getServerSideProps: GetServerSideProps<HomeProps> = async (
+  context
+) => {
+  if (!process.env.FIREBASE_API_KEY) {
+    throw new Error("FIREBASE_API_KEY is not defined");
+  } else if (!process.env.FIREBASE_AUTH_DOMAIN) {
+    throw new Error("FIREBASE_AUTH_DOMAIN is not defined");
+  } else if (!process.env.FIREBASE_PROJECT_ID) {
+    throw new Error("FIREBASE_PROJECT_ID is not defined");
+  }
+
+  return {
+    props: {
+      firebaseConfig: {
+        apiKey: process.env.FIREBASE_API_KEY,
+        authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+        projectId: process.env.FIREBASE_PROJECT_ID,
+      },
+    },
+  };
+};
+
+const useAuth = (firebaseConfig: FirebaseConfig) => {
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  return auth;
+};
+
+const useGoogleAuthProvider = () => new GoogleAuthProvider();
+
+export default function Home({ firebaseConfig }: HomeProps) {
+  const auth = useAuth(firebaseConfig);
+  const provider = useGoogleAuthProvider();
+
+  const signInWithGoogle = () => {
+    if (!auth) {
+      console.error("auth is not initialized");
+      return;
+    } else if (!provider) {
+      console.error("provider is not initialized");
+      return;
+    }
+    signInWithPopup(auth, provider)
+      .then((result) => {
+        // This gives you a Google Access Token. You can use it to access the Google API.
+        const credential = GoogleAuthProvider.credentialFromResult(result);
+        const token = credential.accessToken;
+        // The signed-in user info.
+        const user = result.user;
+        // IdP data available using getAdditionalUserInfo(result)
+        // ...
+      })
+      .catch((error) => {
+        // Handle Errors here.
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        // The email of the user's account used.
+        const email = error.customData.email;
+        // The AuthCredential type that was used.
+        const credential = GoogleAuthProvider.credentialFromError(error);
+        // ...
+      });
+  };
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
@@ -38,6 +112,7 @@ export default function Home() {
             />
           </a>
         </div>
+        <button onClick={signInWithGoogle}>login</button>
       </div>
 
       <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700/10 after:dark:from-sky-900 after:dark:via-[#0141ff]/40 before:lg:h-[360px]">
