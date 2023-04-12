@@ -1,15 +1,14 @@
 // Import the functions you need from the SDKs you need
-import { FirebaseApp, initializeApp } from "firebase/app";
+import { initializeApp } from "firebase/app";
 import {
-  Auth,
   GoogleAuthProvider,
   getAuth,
   signInWithPopup,
+  inMemoryPersistence,
 } from "firebase/auth";
 import { GetServerSideProps } from "next";
 import { Inter } from "next/font/google";
 import Image from "next/image";
-import { useEffect, useState } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -46,8 +45,11 @@ export const getServerSideProps: GetServerSideProps<HomeProps> = async (
 };
 
 const useAuth = (firebaseConfig: FirebaseConfig) => {
+  console.log("useAuth");
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
+  // As httpOnly cookies are to be used, do not persist any state client side.
+  auth.setPersistence(inMemoryPersistence);
   return auth;
 };
 
@@ -67,6 +69,7 @@ export default function Home({ firebaseConfig }: HomeProps) {
     }
     signInWithPopup(auth, provider)
       .then((result) => {
+        console.log("signInWithPopup result", result);
         // This gives you a Google Access Token. You can use it to access the Google API.
         const credential = GoogleAuthProvider.credentialFromResult(result);
         const token = credential.accessToken;
