@@ -68,11 +68,14 @@ export default function Home({ firebaseConfig }: HomeProps) {
       return;
     }
     signInWithPopup(auth, provider)
-      .then((result) => {
+      .then(async (result) => {
         console.log("signInWithPopup result", result);
+        const IdToken = await result.user.getIdToken();
+        console.log("IdToken", IdToken);
         // This gives you a Google Access Token. You can use it to access the Google API.
         const credential = GoogleAuthProvider.credentialFromResult(result);
         const token = credential.accessToken;
+        console.log("credential", credential);
         // The signed-in user info.
         const user = result.user;
         // IdP data available using getAdditionalUserInfo(result)
